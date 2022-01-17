@@ -17,20 +17,25 @@ limitations under the License.
 package controlplane
 
 import (
+	"net"
 	"reflect"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	core "k8s.io/client-go/testing"
 	"k8s.io/kubernetes/pkg/controlplane/reconcilers"
+	"k8s.io/kubernetes/pkg/registry/core/rangeallocation"
 	corerest "k8s.io/kubernetes/pkg/registry/core/rest"
+	"k8s.io/kubernetes/pkg/util/async"
 	netutils "k8s.io/utils/net"
 )
 
@@ -1152,6 +1157,75 @@ func Test_completedConfig_NewBootstrapController(t *testing.T) {
 				return
 			}
 
+		})
+	}
+}
+
+func TestController_UpdateKubernetesService(t *testing.T) {
+	type fields struct {
+		ServiceClient                     corev1client.ServicesGetter
+		NamespaceClient                   corev1client.NamespacesGetter
+		EventClient                       corev1client.EventsGetter
+		readyzClient                      rest.Interface
+		ServiceClusterIPRegistry          rangeallocation.RangeRegistry
+		ServiceClusterIPRange             net.IPNet
+		SecondaryServiceClusterIPRegistry rangeallocation.RangeRegistry
+		SecondaryServiceClusterIPRange    net.IPNet
+		ServiceClusterIPInterval          time.Duration
+		ServiceNodePortRegistry           rangeallocation.RangeRegistry
+		ServiceNodePortInterval           time.Duration
+		ServiceNodePortRange              utilnet.PortRange
+		EndpointReconciler                reconcilers.EndpointReconciler
+		EndpointInterval                  time.Duration
+		SystemNamespaces                  []string
+		SystemNamespacesInterval          time.Duration
+		PublicIP                          net.IP
+		ServiceIP                         net.IP
+		ServicePort                       int
+		ExtraServicePorts                 []corev1.ServicePort
+		ExtraEndpointPorts                []corev1.EndpointPort
+		PublicServicePort                 int
+		KubernetesServiceNodePort         int
+		runner                            *async.Runner
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Controller{
+				ServiceClient:                     tt.fields.ServiceClient,
+				NamespaceClient:                   tt.fields.NamespaceClient,
+				EventClient:                       tt.fields.EventClient,
+				readyzClient:                      tt.fields.readyzClient,
+				ServiceClusterIPRegistry:          tt.fields.ServiceClusterIPRegistry,
+				ServiceClusterIPRange:             tt.fields.ServiceClusterIPRange,
+				SecondaryServiceClusterIPRegistry: tt.fields.SecondaryServiceClusterIPRegistry,
+				SecondaryServiceClusterIPRange:    tt.fields.SecondaryServiceClusterIPRange,
+				ServiceClusterIPInterval:          tt.fields.ServiceClusterIPInterval,
+				ServiceNodePortRegistry:           tt.fields.ServiceNodePortRegistry,
+				ServiceNodePortInterval:           tt.fields.ServiceNodePortInterval,
+				ServiceNodePortRange:              tt.fields.ServiceNodePortRange,
+				EndpointReconciler:                tt.fields.EndpointReconciler,
+				EndpointInterval:                  tt.fields.EndpointInterval,
+				SystemNamespaces:                  tt.fields.SystemNamespaces,
+				SystemNamespacesInterval:          tt.fields.SystemNamespacesInterval,
+				PublicIP:                          tt.fields.PublicIP,
+				ServiceIP:                         tt.fields.ServiceIP,
+				ServicePort:                       tt.fields.ServicePort,
+				ExtraServicePorts:                 tt.fields.ExtraServicePorts,
+				ExtraEndpointPorts:                tt.fields.ExtraEndpointPorts,
+				PublicServicePort:                 tt.fields.PublicServicePort,
+				KubernetesServiceNodePort:         tt.fields.KubernetesServiceNodePort,
+				runner:                            tt.fields.runner,
+			}
+			if err := c.UpdateKubernetesService(); (err != nil) != tt.wantErr {
+				t.Errorf("Controller.UpdateKubernetesService() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }

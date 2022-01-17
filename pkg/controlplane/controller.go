@@ -236,14 +236,14 @@ func (c *Controller) RunKubernetesService(ch chan struct{}) {
 		// Service definition is not reconciled after first
 		// run, ports and type will be corrected only during
 		// start.
-		if err := c.UpdateKubernetesService(false); err != nil {
+		if err := c.UpdateKubernetesService(); err != nil {
 			runtime.HandleError(fmt.Errorf("unable to sync kubernetes service: %v", err))
 		}
 	}, c.EndpointInterval, ch)
 }
 
 // UpdateKubernetesService attempts to update the default Kube service.
-func (c *Controller) UpdateKubernetesService(reconcile bool) error {
+func (c *Controller) UpdateKubernetesService() error {
 	// Update service & endpoint records.
 	// TODO: when it becomes possible to change this stuff,
 	// stop polling and start watching.
@@ -253,11 +253,11 @@ func (c *Controller) UpdateKubernetesService(reconcile bool) error {
 	}
 
 	servicePorts, serviceType := createPortAndServiceSpec(c.ServicePort, c.PublicServicePort, c.KubernetesServiceNodePort, "https", c.ExtraServicePorts)
-	if err := c.CreateOrUpdateMasterServiceIfNeeded(kubernetesServiceName, c.ServiceIP, servicePorts, serviceType, reconcile); err != nil {
+	if err := c.CreateOrUpdateMasterServiceIfNeeded(kubernetesServiceName, c.ServiceIP, servicePorts, serviceType, true); err != nil {
 		return err
 	}
 	endpointPorts := createEndpointPortSpec(c.PublicServicePort, "https", c.ExtraEndpointPorts)
-	if err := c.EndpointReconciler.ReconcileEndpoints(kubernetesServiceName, c.PublicIP, endpointPorts, reconcile); err != nil {
+	if err := c.EndpointReconciler.ReconcileEndpoints(kubernetesServiceName, c.PublicIP, endpointPorts, true); err != nil {
 		return err
 	}
 	return nil
